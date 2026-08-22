@@ -27,6 +27,22 @@ body {
   padding: 1.5rem;
 }
 
+.episode-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.episode-controls input,
+.episode-controls select {
+  width: 100%;
+  padding: 0.75rem;
+  font: inherit;
+  border: 1px solid #777;
+  border-radius: 4px;
+}
+
 .episode-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -57,4 +73,10 @@ body {
 
 .site-footer a {
   color: white;
+}
+
+@media (max-width: 600px) {
+  .episode-controls {
+    grid-template-columns: 1fr;
+  }
 }
