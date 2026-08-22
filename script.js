@@ -1,62 +1,163 @@
 // You can edit ALL of the code here
 
 let allEpisodes = [];
-const episodesUrl = "https://api.tvmaze.com/shows/82/episodes";
+let allShows = [];
+
+const showsUrl = "https://api.tvmaze.com/shows";
+const fetchedData = new Map();
 
 async function setup() {
-  showLoadingMessage();
+  showLoadingMessage("Loading shows...");
 
   try {
-    // This fetch runs once when the page first loads.
-    const response = await fetch(episodesUrl);
-
-    if (!response.ok) {
-      throw new Error("The episode data could not be loaded.");
-    }
-
-    allEpisodes = await response.json();
-    makePageForEpisodes(allEpisodes);
+    allShows = await getData(showsUrl);
+    sortShowsByName(allShows);
+    makePageForShows();
   } catch (error) {
-    showErrorMessage();
+    showPageErrorMessage("Sorry, we could not load the shows. Please refresh the page and try again.");
     console.error(error);
   }
 }
 
-function showLoadingMessage() {
-  const rootElem = document.getElementById("root");
-  rootElem.textContent = "Loading episodes...";
+function getData(url) {
+  // Save each request so the same URL is never fetched twice during one visit.
+  if (fetchedData.has(url)) {
+    return fetchedData.get(url);
+  }
+
+  const request = fetch(url).then(function (response) {
+    if (!response.ok) {
+      throw new Error("The data could not be loaded.");
+    }
+
+    return response.json();
+  });
+
+  fetchedData.set(url, request);
+  return request;
 }
 
-function showErrorMessage() {
+function sortShowsByName(showList) {
+  showList.sort(function (firstShow, secondShow) {
+    return firstShow.name.localeCompare(secondShow.name, undefined, {
+      sensitivity: "base",
+    });
+  });
+}
+
+function makePageForShows() {
+  const rootElem = document.getElementById("root");
+  rootElem.textContent = "";
+
+  const showControls = document.createElement("section");
+  showControls.className = "show-controls";
+
+  const showLabel = document.createElement("label");
+  showLabel.htmlFor = "show-selector";
+  showLabel.textContent = "Choose a TV show";
+  showControls.appendChild(showLabel);
+
+  const showSelector = document.createElement("select");
+  showSelector.id = "show-selector";
+  showSelector.addEventListener("change", handleShowSelection);
+
+  const defaultOption = document.createElement("option");
+  defaultOption.value = "";
+  defaultOption.textContent = "Choose a show";
+  showSelector.appendChild(defaultOption);
+
+  for (const show of allShows) {
+    const showOption = document.createElement("option");
+    showOption.value = show.id;
+    showOption.textContent = show.name;
+    showSelector.appendChild(showOption);
+  }
+
+  showControls.appendChild(showSelector);
+  rootElem.appendChild(showControls);
+
+  const episodeView = document.createElement("section");
+  episodeView.id = "episode-view";
+  rootElem.appendChild(episodeView);
+}
+
+async function handleShowSelection(event) {
+  const showId = event.target.value;
+  const episodeView = document.getElementById("episode-view");
+
+  if (showId === "") {
+    episodeView.textContent = "";
+    return;
+  }
+
+  const selectedShow = allShows.find(function (show) {
+    return show.id === Number(showId);
+  });
+
+  showEpisodeLoadingMessage();
+
+  try {
+    const episodeUrl = `https://api.tvmaze.com/shows/${showId}/episodes`;
+    allEpisodes = await getData(episodeUrl);
+    makePageForEpisodes(allEpisodes, selectedShow.name);
+  } catch (error) {
+    showEpisodeErrorMessage();
+    console.error(error);
+  }
+}
+
+function showLoadingMessage(message) {
+  const rootElem = document.getElementById("root");
+  rootElem.textContent = message;
+}
+
+function showPageErrorMessage(message) {
   const rootElem = document.getElementById("root");
   rootElem.textContent = "";
 
   const errorMessage = document.createElement("p");
-  errorMessage.textContent =
-    "Sorry, we could not load the episodes. Please check your internet connection and refresh the page.";
+  errorMessage.textContent = message;
   errorMessage.setAttribute("role", "alert");
   rootElem.appendChild(errorMessage);
 }
 
-function makePageForEpisodes(episodeList) {
-  const rootElem = document.getElementById("root");
+function showEpisodeLoadingMessage() {
+  const episodeView = document.getElementById("episode-view");
+  episodeView.textContent = "Loading episodes...";
+}
 
-  // Clear the page before adding the search, selector, and episode cards.
-  rootElem.textContent = "";
+function showEpisodeErrorMessage() {
+  const episodeView = document.getElementById("episode-view");
+  episodeView.textContent = "";
+
+  const errorMessage = document.createElement("p");
+  errorMessage.textContent =
+    "Sorry, we could not load this show's episodes. Please choose another show or refresh the page.";
+  errorMessage.setAttribute("role", "alert");
+  episodeView.appendChild(errorMessage);
+}
+
+function makePageForEpisodes(episodeList, showName) {
+  const episodeView = document.getElementById("episode-view");
+  episodeView.textContent = "";
+
+  const heading = document.createElement("h2");
+  heading.textContent = `${showName} Episodes`;
+  episodeView.appendChild(heading);
 
   const controls = makeEpisodeControls(episodeList);
-  rootElem.appendChild(controls);
+  episodeView.appendChild(controls);
 
   const episodeCount = document.createElement("p");
   episodeCount.id = "episode-count";
   episodeCount.setAttribute("aria-live", "polite");
-  rootElem.appendChild(episodeCount);
+  episodeView.appendChild(episodeCount);
 
   const episodeListElement = document.createElement("section");
   episodeListElement.id = "episode-list";
   episodeListElement.className = "episode-list";
-  episodeListElement.setAttribute("aria-label", "Game of Thrones episodes");
-  rootElem.appendChild(episodeListElement);
+  episodeListElement.setAttribute("aria-label", `${showName} episodes`);
+  episodeView.appendChild(episodeListElement);
 
   displayEpisodes(episodeList);
 }
@@ -155,7 +256,7 @@ function makeEpisodeCard(episode) {
   card.id = `episode-${episode.id}`;
   card.tabIndex = -1;
 
-  const title = document.createElement("h2");
+  const title = document.createElement("h3");
   title.textContent = `${makeEpisodeCode(episode)} - ${episode.name}`;
   card.appendChild(title);
 
