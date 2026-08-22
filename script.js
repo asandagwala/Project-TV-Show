@@ -1,10 +1,41 @@
 // You can edit ALL of the code here
 
 let allEpisodes = [];
+const episodesUrl = "https://api.tvmaze.com/shows/82/episodes";
 
-function setup() {
-  allEpisodes = getAllEpisodes();
-  makePageForEpisodes(allEpisodes);
+async function setup() {
+  showLoadingMessage();
+
+  try {
+    // This fetch runs once when the page first loads.
+    const response = await fetch(episodesUrl);
+
+    if (!response.ok) {
+      throw new Error("The episode data could not be loaded.");
+    }
+
+    allEpisodes = await response.json();
+    makePageForEpisodes(allEpisodes);
+  } catch (error) {
+    showErrorMessage();
+    console.error(error);
+  }
+}
+
+function showLoadingMessage() {
+  const rootElem = document.getElementById("root");
+  rootElem.textContent = "Loading episodes...";
+}
+
+function showErrorMessage() {
+  const rootElem = document.getElementById("root");
+  rootElem.textContent = "";
+
+  const errorMessage = document.createElement("p");
+  errorMessage.textContent =
+    "Sorry, we could not load the episodes. Please check your internet connection and refresh the page.";
+  errorMessage.setAttribute("role", "alert");
+  rootElem.appendChild(errorMessage);
 }
 
 function makePageForEpisodes(episodeList) {
