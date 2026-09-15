@@ -35,7 +35,15 @@ body {
   margin-bottom: 1rem;
 }
 
+.show-list,
+.episode-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
 .show-controls select,
+.show-controls input,
 .episode-controls input,
 .episode-controls select {
   width: 100%;
@@ -45,12 +53,7 @@ body {
   border-radius: 4px;
 }
 
-.episode-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-}
-
+.show-card,
 .episode-card {
   overflow: hidden;
   background-color: white;
@@ -58,15 +61,36 @@ body {
   box-shadow: 0 2px 6px rgb(0 0 0 / 15%);
 }
 
+.show-card div,
+.show-card p,
 .episode-card h3,
 .episode-card div {
   margin: 1rem;
+}
+
+.show-title {
+  width: 100%;
+  padding: 1rem;
+  color: white;
+  font: inherit;
+  font-size: 1.25rem;
+  font-weight: bold;
+  text-align: left;
+  background-color: #24243e;
+  border: 0;
+  cursor: pointer;
+}
+
+.show-title:hover,
+.show-title:focus {
+  background-color: #3d3d63;
 }
 
 .episode-card h3 {
   font-size: 1.25rem;
 }
 
+.show-card img,
 .episode-card img {
   display: block;
   width: 100%;
